@@ -1,10 +1,19 @@
 spring:
   application:
     name: ai-code-mother-backend
+  # mysql
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/ai_code_mother
+    username: root
+    password: 12345678
 server:
   port: 8123
   servlet:
     context-path: /api
+# 自定义配置
+user:
+  salt: ai-code-mother
 # springdoc-openapi
 springdoc:
   group-configs:
