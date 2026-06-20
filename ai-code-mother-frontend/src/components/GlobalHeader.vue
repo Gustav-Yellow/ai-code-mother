@@ -5,8 +5,8 @@
       <a-col flex="200px">
         <RouterLink to="/">
           <div class="header-left">
-            <img class="logo" src="@/assets/logo.svg" alt="Logo" />
-            <h1 class="site-title">鱼皮应用生成</h1>
+            <img class="logo" src="@/assets/logo.png" alt="Logo" />
+            <h1 class="site-title">零代码应用生成</h1>
           </div>
         </RouterLink>
       </a-col>
@@ -22,7 +22,25 @@
       <!-- 右侧：用户操作区域 -->
       <a-col>
         <div class="user-login-status">
-          <a-button type="primary">登录</a-button>
+          <div v-if="loginUserStore.loginUser.id">
+            <a-dropdown>
+              <a-space>
+                <a-avatar :src="loginUserStore.loginUser.userAvatar" />
+                {{ loginUserStore.loginUser.userName ?? '无名' }}
+              </a-space>
+              <template #overlay>
+                <a-menu>
+                  <a-menu-item @click="doLogout">
+                    <LogoutOutlined />
+                    退出登录
+                  </a-menu-item>
+                </a-menu>
+              </template>
+            </a-dropdown>
+          </div>
+          <div v-else>
+            <a-button type="primary" href="/user/login">登录</a-button>
+          </div>
         </div>
       </a-col>
     </a-row>
@@ -33,6 +51,15 @@
 import { h, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import type { MenuProps } from 'ant-design-vue'
+import { useLoginUserStore } from '@/stores/loginUser'
+import { LogoutOutlined } from '@ant-design/icons-vue'
+import { userLogout } from '@/api/userController'
+import { message } from 'ant-design-vue'
+import { computed } from 'vue'
+
+
+// 获取登录用户状态
+const loginUserStore = useLoginUserStore();
 
 const router = useRouter()
 // 当前选中菜单
@@ -42,24 +69,41 @@ router.afterEach((to, from, next) => {
   selectedKeys.value = [to.path]
 })
 
-// 菜单配置项
-const menuItems = ref([
+// 默认的菜单配置项，需要后续根据用户身份展示对应的菜单项
+const originItems = [
   {
     key: '/',
     label: '首页',
     title: '首页',
   },
   {
-    key: '/about',
-    label: '关于',
-    title: '关于我们',
+    key: '/admin/userManage',
+    label: '用户管理',
+    title: '用户管理',
   },
   {
     key: 'others',
-    label: h('a', { href: 'https://www.codefather.cn', target: '_blank' }, '编程导航'),
-    title: '编程导航',
+    label: h('a', { href: 'https://github.com/Gustav-Yellow/ai-code-mother', target: '_blank' }, '个人博客'),
+    title: '个人博客',
   },
-])
+]
+
+// 过滤菜单项
+const filterMenus = (menus = [] as MenuProps['items']) => {
+  return menus?.filter((menu) => {
+    const menuKey = menu?.key as string
+    if (menuKey?.startsWith('/admin')) {
+      const loginUser = loginUserStore.loginUser
+      if (!loginUser || loginUser.userRole !== 'admin') {
+        return false
+      }
+    }
+    return true
+  })
+}
+
+// 展示在实际用户可以看到的菜单的路由数组
+const menuItems = computed<MenuProps['items']>(() => filterMenus(originItems))
 
 // 处理菜单点击
 const handleMenuClick: MenuProps['onClick'] = (e) => {
@@ -70,6 +114,20 @@ const handleMenuClick: MenuProps['onClick'] = (e) => {
     router.push(key)
   }
 }
+
+// 用户注销
+const doLogout = async () => {
+  const res = await userLogout();
+  if (res.data.code === 0) {
+    loginUserStore.setLoginUser({
+      userName: '未登录',
+    })
+    message.success('退出登录成功')
+    await router.push('/user/login')
+  } else {
+    message.error('退出登录失败，' + res.data.message)
+  }
+}
 </script>
 
 <style scoped>
@@ -78,10 +136,13 @@ const handleMenuClick: MenuProps['onClick'] = (e) => {
   padding: 0 24px;
   height: 64px;
   line-height: 64px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .header :deep(.ant-row) {
-  width: 100%;
   height: 100%;
   align-items: center;
 }
@@ -89,21 +150,30 @@ const handleMenuClick: MenuProps['onClick'] = (e) => {
 .header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  height: 64px;
 }
 
 .logo {
-  height: 48px;
-  width: 48px;
+  height: 28px;
+  width: 28px;
 }
 
 .site-title {
   margin: 0;
   font-size: 18px;
   color: #1890ff;
+  line-height: 1;
+}
+
+.user-login-status {
+  display: flex;
+  align-items: center;
+  height: 64px;
 }
 
 .ant-menu-horizontal {
   border-bottom: none !important;
+  line-height: 64px;
 }
 </style>

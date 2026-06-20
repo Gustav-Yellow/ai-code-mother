@@ -3,6 +3,7 @@ package com.ai.aicodemother.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.ai.aicodemother.common.BaseResponse;
 import com.ai.aicodemother.exception.BusinessException;
 import com.ai.aicodemother.exception.ErrorCode;
 import com.ai.aicodemother.model.dto.UserQueryRequest;

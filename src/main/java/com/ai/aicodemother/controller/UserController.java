@@ -77,7 +77,7 @@ public class UserController {
      * @return 登录用户信息(脱敏)
      */
     @GetMapping("/get/login")
-    public BaseResponse<LoginUserVO> getUserLogin(HttpServletRequest request) {
+    public BaseResponse<LoginUserVO> getLoginUser(HttpServletRequest request) {
         User user = userService.getLoginUser(request);
         LoginUserVO loginUserVO = userService.getLoginUserVO(user);
         return ResultUtils.success(loginUserVO);
@@ -89,8 +89,8 @@ public class UserController {
      * @return true 退出成功，false 退出失败
      */
     @PostMapping("/logout")
-    public boolean userLogout(HttpServletRequest request) {
-        return userService.userLogout(request);
+    public BaseResponse<Boolean> userLogout(HttpServletRequest request) {
+        return ResultUtils.success(userService.userLogout(request));
     }
 
     /**
