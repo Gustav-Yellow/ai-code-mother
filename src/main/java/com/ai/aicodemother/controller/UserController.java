@@ -9,16 +9,13 @@ import com.ai.aicodemother.constant.UserConstant;
 import com.ai.aicodemother.exception.BusinessException;
 import com.ai.aicodemother.exception.ErrorCode;
 import com.ai.aicodemother.exception.ThrowUtils;
-import com.ai.aicodemother.model.dto.*;
+import com.ai.aicodemother.model.dto.user.*;
 import com.ai.aicodemother.model.vo.LoginUserVO;
 import com.ai.aicodemother.model.vo.UserVO;
 import com.mybatisflex.core.paginate.Page;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,8 +23,6 @@ import com.ai.aicodemother.model.entity.User;
 import com.ai.aicodemother.service.UserService;
 import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
-
-import static com.ai.aicodemother.constant.UserConstant.USER_LOGIN_STATE;
 
 /**
  * 用户 控制层。
