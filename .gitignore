@@ -4,6 +4,8 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 .DS_Store
+application-local.yaml
+tmp
 
 ### STS ###
 .apt_generated
