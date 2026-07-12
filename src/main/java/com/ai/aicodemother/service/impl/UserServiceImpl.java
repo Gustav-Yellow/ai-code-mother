@@ -159,7 +159,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>  implements U
         // 从数据库查询最新的用户数据
         long userId = currentUser.getId();
         User user = this.getById(userId);
-        if (currentUser == null) {
+        // 判断请求中的用户信息是否和数据库中的用户信息一致
+        if (user == null) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "用户不存在");
         }
         return currentUser;
