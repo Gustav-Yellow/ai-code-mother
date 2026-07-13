@@ -1,10 +1,5 @@
 <script setup lang="ts">
 import BasicLayout from '@/layouts/BasicLayout.vue'
-import { useLoginUserStore } from '@/stores/loginUser.ts'
-
-// 保证在第一时间获取到登录用户的信息，因为项目启动时最先加载的就是 App.vue
-const loginUserStore = useLoginUserStore();
-loginUserStore.fetchLoginUser();
 </script>
 
 <template>
@@ -12,4 +7,23 @@ loginUserStore.fetchLoginUser();
 </template>
 
 <style>
+/* 全局样式优化 */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell',
+    'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+html {
+  overflow-x: hidden;
+}
 </style>

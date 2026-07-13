@@ -85,13 +85,12 @@ const columns = [
 
 // 展示的数据
 const data = ref<API.UserVO[]>([])
-// 数据的总量
 const total = ref(0)
 
 // 搜索条件
 const searchParams = reactive<API.UserQueryRequest>({
   pageNum: 1,
-  pageSize: 2,
+  pageSize: 10,
 })
 
 // 获取数据
@@ -119,12 +118,13 @@ const pagination = computed(() => {
 })
 
 // 表格分页变化时的操作
-const doTableChange = (page: any) => {
+const doTableChange = (page: { current: number; pageSize: number }) => {
   searchParams.pageNum = page.current
   searchParams.pageSize = page.pageSize
   fetchData()
 }
 
+// 搜索数据
 const doSearch = () => {
   // 重置页码
   searchParams.pageNum = 1
@@ -136,7 +136,7 @@ const doDelete = async (id: string) => {
   if (!id) {
     return
   }
-  const res = await deleteUser({ id })  // 这里的id如果转换成Number那么会导致前端接受的数字长度达不到后端的数字长度从而导致最后几位数位强制设置成0
+  const res = await deleteUser({ id })
   if (res.data.code === 0) {
     message.success('删除成功')
     // 刷新数据
@@ -152,8 +152,10 @@ onMounted(() => {
 })
 </script>
 
-<style>
+<style scoped>
 #userManagePage {
-    max-width: 1200px;
+  padding: 24px;
+  background: white;
+  margin-top: 16px;
 }
 </style>

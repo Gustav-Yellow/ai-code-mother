@@ -6,7 +6,7 @@
         <RouterLink to="/">
           <div class="header-left">
             <img class="logo" src="@/assets/logo.png" alt="Logo" />
-            <h1 class="site-title">零代码应用生成</h1>
+            <h1 class="site-title">应用生成</h1>
           </div>
         </RouterLink>
       </a-col>
@@ -48,19 +48,14 @@
 </template>
 
 <script setup lang="ts">
-import { h, ref } from 'vue'
+import { computed, h, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import type { MenuProps } from 'ant-design-vue'
-import { useLoginUserStore } from '@/stores/loginUser'
-import { LogoutOutlined } from '@ant-design/icons-vue'
-import { userLogout } from '@/api/userController'
-import { message } from 'ant-design-vue'
-import { computed } from 'vue'
+import { type MenuProps, message } from 'ant-design-vue'
+import { useLoginUserStore } from '@/stores/loginUser.ts'
+import { userLogout } from '@/api/userController.ts'
+import { LogoutOutlined, HomeOutlined } from '@ant-design/icons-vue'
 
-
-// 获取登录用户状态
-const loginUserStore = useLoginUserStore();
-
+const loginUserStore = useLoginUserStore()
 const router = useRouter()
 // 当前选中菜单
 const selectedKeys = ref<string[]>(['/'])
@@ -69,12 +64,13 @@ router.afterEach((to, from, next) => {
   selectedKeys.value = [to.path]
 })
 
-// 默认的菜单配置项，需要后续根据用户身份展示对应的菜单项
+// 菜单配置项
 const originItems = [
   {
     key: '/',
-    label: '首页',
-    title: '首页',
+    icon: () => h(HomeOutlined),
+    label: '主页',
+    title: '主页',
   },
   {
     key: '/admin/userManage',
@@ -82,9 +78,14 @@ const originItems = [
     title: '用户管理',
   },
   {
+    key: '/admin/appManage',
+    label: '应用管理',
+    title: '应用管理',
+  },
+  {
     key: 'others',
-    label: h('a', { href: 'https://github.com/Gustav-Yellow/ai-code-mother', target: '_blank' }, '个人博客'),
-    title: '个人博客',
+    label: h('a', { href: 'https://github.com/Gustav-Yellow/ai-code-mother', target: '_blank' }, '项目地址'),
+    title: '项目地址',
   },
 ]
 
@@ -102,7 +103,7 @@ const filterMenus = (menus = [] as MenuProps['items']) => {
   })
 }
 
-// 展示在实际用户可以看到的菜单的路由数组
+// 展示在菜单的路由数组
 const menuItems = computed<MenuProps['items']>(() => filterMenus(originItems))
 
 // 处理菜单点击
@@ -115,9 +116,9 @@ const handleMenuClick: MenuProps['onClick'] = (e) => {
   }
 }
 
-// 用户注销
+// 退出登录
 const doLogout = async () => {
-  const res = await userLogout();
+  const res = await userLogout()
   if (res.data.code === 0) {
     loginUserStore.setLoginUser({
       userName: '未登录',
@@ -134,46 +135,29 @@ const doLogout = async () => {
 .header {
   background: #fff;
   padding: 0 24px;
-  height: 64px;
-  line-height: 64px;
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.header :deep(.ant-row) {
-  height: 100%;
-  align-items: center;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
-  height: 64px;
+  gap: 12px;
 }
 
 .logo {
-  height: 28px;
-  width: 28px;
+  height: 48px;
+  width: 48px;
 }
 
 .site-title {
   margin: 0;
   font-size: 18px;
   color: #1890ff;
-  line-height: 1;
-}
-
-.user-login-status {
-  display: flex;
-  align-items: center;
-  height: 64px;
 }
 
 .ant-menu-horizontal {
   border-bottom: none !important;
-  line-height: 64px;
 }
 </style>
