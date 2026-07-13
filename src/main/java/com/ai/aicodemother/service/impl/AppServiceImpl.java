@@ -147,11 +147,11 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
         String sortOrder = appQueryRequest.getSortOrder();
         return QueryWrapper.create()
                 .eq("id", id)
-                .like("appName", appName)
-                .like("cover", cover)
-                .like("initPrompt", initPrompt)
-                .eq("codeGenType", codeGenType)
-                .eq("deployKey", deployKey)
+                .like("appName", appName, StrUtil.isNotBlank(appName))
+                .like("cover", cover, StrUtil.isNotBlank(cover))
+                .like("initPrompt", initPrompt, StrUtil.isNotBlank(initPrompt))
+                .eq("codeGenType", codeGenType, StrUtil.isNotBlank(codeGenType))
+                .eq("deployKey", deployKey, StrUtil.isNotBlank(deployKey))
                 .eq("priority", priority)
                 .eq("userId", userId)
                 .orderBy(sortField, "ascend".equals(sortOrder));
