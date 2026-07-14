@@ -13,7 +13,7 @@
         >
           <a-select-option value="">全部</a-select-option>
           <a-select-option value="user">用户消息</a-select-option>
-          <a-select-option value="assistant">AI消息</a-select-option>
+          <a-select-option value="ai">AI消息</a-select-option>
         </a-select>
       </a-form-item>
       <a-form-item label="应用ID">
@@ -44,7 +44,7 @@
         </template>
         <template v-else-if="column.dataIndex === 'messageType'">
           <a-tag :color="record.messageType === 'user' ? 'blue' : 'green'">
-            {{ record.messageType === 'user' ? '用户消息' : 'AI消息' }}
+            {{ record.messageType === 'user' ? '用户消息' : record.messageType === 'ai' ? 'AI消息' : '未知类型' }}
           </a-tag>
         </template>
         <template v-else-if="column.dataIndex === 'createTime'">

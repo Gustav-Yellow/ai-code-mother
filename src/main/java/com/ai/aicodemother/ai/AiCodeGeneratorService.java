@@ -2,7 +2,9 @@ package com.ai.aicodemother.ai;
 
 import com.ai.aicodemother.ai.model.HtmlCodeResult;
 import com.ai.aicodemother.ai.model.MultiFileCodeResult;
+import dev.langchain4j.service.MemoryId;
 import dev.langchain4j.service.SystemMessage;
+import dev.langchain4j.service.UserMessage;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
@@ -15,8 +17,9 @@ public interface AiCodeGeneratorService {
      * @return 生成的代码结果
      */
     // 在这里可以直接将返回值修改成定义好的返回格式，这样框架会将最后大模型返回的结果直接存到对应类型的对象中。
+    // 这里使用 redis 对话记忆的第一种方式，通过添加 memoryId 的方式来实现对话记忆。
     @SystemMessage(fromResource = "prompt/codegen-html-system-prompt.txt")
-    HtmlCodeResult generateHtmlCode(String userMessage);
+    HtmlCodeResult generateHtmlCode(@UserMessage String userMessage);
 
     /**
      * 生成多文件代码

@@ -102,8 +102,8 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
 
         // 拼接查询条件
         queryWrapper.eq("id", id)
-                .like("message", message)
-                .eq("messageType", messageType)
+                .like("message", message, StrUtil.isNotBlank(message))
+                .eq("messageType", messageType, StrUtil.isNotBlank(messageType))
                 .eq("appId", appId)
                 .eq("userId", userId);
 
