@@ -6,6 +6,7 @@ import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.core.service.IService;
 import com.ai.aicodemother.model.entity.ChatHistory;
+import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 
 import java.time.LocalDateTime;
 
@@ -34,6 +35,16 @@ public interface ChatHistoryService extends IService<ChatHistory> {
      * @return 是否删除成功
      */
     boolean deleteByAppId(Long appId);
+
+    /**
+     * 加载对话历史到内存中
+     *
+     * @param appId 应用id
+     * @param chatMemory 对话记忆
+     * @param maxCount 最大数量
+     * @return 加载的数量
+     */
+    int loadChatHistoryToMemory(Long appId, MessageWindowChatMemory chatMemory, int maxCount);
 
     /**
      * 根据请求构造查询条件
