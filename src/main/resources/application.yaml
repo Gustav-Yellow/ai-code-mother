@@ -1,12 +1,18 @@
 spring:
   application:
     name: ai-code-mother-backend
+  # session 配置
+  session:
+    store-type: redis
+    # session 过期时间，默认30分钟
+    timeout: 1800
   # mysql
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/ai_code_mother
     username: root
     password: 12345678
+  # redis
   data:
     redis:
       host: 127.0.0.1
@@ -19,6 +25,10 @@ server:
   port: 8123
   servlet:
     context-path: /api
+    # 传给前端的 cookie 也是 30 分钟过期
+    session:
+      cookie:
+        max-age: 1800
 # 自定义配置
 user:
   salt: ai-code-mother
