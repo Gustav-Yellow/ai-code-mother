@@ -12,6 +12,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
+/**
+ * 文件写入工具，AiService 调用该工具时，会将文件写入到指定路径。
+ * LangChain4j 框架可以在执行的过程中根据 AI 返回的工具调用请求 ID 来获取对应的工具调用请求，
+ * 然后根据工具调用请求中的参数来自动执行工具。
+ */
 @Slf4j
 public class FileWriteTool {
 

@@ -109,7 +109,9 @@ public class AppController {
         // 应用名称暂时为 initPrompt 前 12 位
         app.setAppName(initPrompt.substring(0, Math.min(initPrompt.length(), 12)));
         // 默认设置为 Multi-File 生成
-        app.setCodeGenType(CodeGenTypeEnum.MULTI_FILE.getValue());
+        // app.setCodeGenType(CodeGenTypeEnum.MULTI_FILE.getValue());
+        // 默认设置为 VUE_PROJECT 生成
+        app.setCodeGenType(CodeGenTypeEnum.VUE_PROJECT.getValue());
         // 插入数据库
         boolean result = appService.save(app);
         ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);

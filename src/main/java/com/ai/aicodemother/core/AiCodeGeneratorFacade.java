@@ -1,17 +1,26 @@
 package com.ai.aicodemother.core;
 
+import cn.hutool.json.JSONUtil;
 import com.ai.aicodemother.ai.AiCodeGeneratorService;
 import com.ai.aicodemother.ai.AiCodeGeneratorServiceFactory;
 import com.ai.aicodemother.ai.model.HtmlCodeResult;
 import com.ai.aicodemother.ai.model.MultiFileCodeResult;
+import com.ai.aicodemother.ai.model.message.AiResponseMessage;
+import com.ai.aicodemother.ai.model.message.ToolExecutedMessage;
+import com.ai.aicodemother.ai.model.message.ToolRequestMessage;
 import com.ai.aicodemother.core.parser.CodeParserExecutor;
 import com.ai.aicodemother.core.saver.CodeFileSaverExecutor;
 import com.ai.aicodemother.exception.BusinessException;
 import com.ai.aicodemother.exception.ErrorCode;
 import com.ai.aicodemother.model.enums.CodeGenTypeEnum;
+import dev.langchain4j.model.chat.response.ChatResponse;
+import dev.langchain4j.service.TokenStream;
+import dev.langchain4j.service.tool.ToolExecution;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.View;
 import reactor.core.publisher.Flux;
 
 import java.io.File;
@@ -26,6 +35,8 @@ public class AiCodeGeneratorFacade {
     // 需要根据不同的应用id，获取不同的 AiCodeGeneratorService 实例，不再直接引用 AiCodeGeneratorService 实例
     @Resource
     private AiCodeGeneratorServiceFactory aiCodeGeneratorServiceFactory;
+    @Autowired
+    private View error;
 
     /**
      * 统一入口：根据类型生成并保存代码
@@ -39,7 +50,7 @@ public class AiCodeGeneratorFacade {
         if (codeGenTypeEnum == null) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "生成类型为空");
         }
-        // 从 AiService 工厂中根据 appId，获取对应的 AiCodeGeneratorService 实例
+        // 从 AiService 工厂中根据 appId 和 CodeGenType，获取对应的 AiCodeGeneratorService 实例
         AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId, codeGenTypeEnum);
         return switch (codeGenTypeEnum) {
             case HTML -> {
@@ -69,7 +80,7 @@ public class AiCodeGeneratorFacade {
         if (codeGenTypeEnum == null) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "生成类型为空");
         }
-        // 从 AiService 工厂中根据 appId，获取对应的 AiCodeGeneratorService 实例
+        // 从 AiService 工厂中根据 appId 和 codeGenType，获取对应的 AiCodeGeneratorService 实例
         AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId, codeGenTypeEnum);
         return switch (codeGenTypeEnum) {
             case HTML -> {
@@ -81,14 +92,51 @@ public class AiCodeGeneratorFacade {
                 yield processCodeStream(codeStream, CodeGenTypeEnum.MULTI_FILE, appId);
             }
             case VUE_PROJECT -> {
-                Flux<String> codeStream = aiCodeGeneratorService.generateVueProjectCodeStream(appId, userMessage);
-                yield processCodeStream(codeStream, CodeGenTypeEnum.MULTI_FILE, appId); // 这里先使用 MULTI_FILE 类型进行占位
+                TokenStream tokenStream = aiCodeGeneratorService.generateVueProjectCodeStream(appId, userMessage);
+                yield processTokenStream(tokenStream, CodeGenTypeEnum.MULTI_FILE, appId);
             }
             default -> {
                 String errorMessage = "不支持的生成类型：" + codeGenTypeEnum.getValue();
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR, errorMessage);
             }
         };
+    }
+
+    /**
+     * 充当适配器，将 TokenStream 转换成 Flux
+     *
+     * @param tokenStream token流
+     * @param codeGenTypeEnum 代码生成类型
+     * @param appId 应用id
+     * @return 流式响应
+     */
+    private Flux<String> processTokenStream(TokenStream tokenStream, CodeGenTypeEnum codeGenTypeEnum, Long appId) {
+        return Flux.create(sink -> {
+            tokenStream.onPartialResponse((String partialResponse) -> {
+                        // 这里获取到的是 AI 生成的回复，需要将 partialResponse 封装成 AiResponseMessage 对象，再转换成 JSON 字符串
+                        AiResponseMessage aiResponseMessage = new AiResponseMessage(partialResponse);
+                        sink.next(JSONUtil.toJsonStr(aiResponseMessage));
+                    })
+                    .onPartialToolExecutionRequest((index, toolExecutionRequest) -> {
+                        // 这里获取到的是工具请求，需要将 toolExecutionRequest 封装成 ToolRequestMessage 对象，再转换成 JSON 字符串
+                        ToolRequestMessage toolRequestMessage = new ToolRequestMessage(toolExecutionRequest);
+                        sink.next(JSONUtil.toJsonStr(toolRequestMessage));
+                    })
+                    .onToolExecuted((ToolExecution toolExecution) -> {
+                        // 这里获取到的是工具执行完成，需要将 toolExecution 封装成 ToolExecutedMessage 对象，再转换成 JSON 字符串
+                        ToolExecutedMessage toolExecutionMessage = new ToolExecutedMessage(toolExecution);
+                        sink.next(JSONUtil.toJsonStr(toolExecutionMessage));
+                    })
+                    .onCompleteResponse((ChatResponse response) -> {
+                        // 这里是最终响应
+                        sink.complete();
+                    })
+                    .onError((Throwable error) -> {
+                        error.printStackTrace();
+                        sink.error(error);
+                    })
+                    .start();
+        });
     }
 
     /**

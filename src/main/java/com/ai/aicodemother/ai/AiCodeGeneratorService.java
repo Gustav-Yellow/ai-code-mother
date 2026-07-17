@@ -4,6 +4,7 @@ import com.ai.aicodemother.ai.model.HtmlCodeResult;
 import com.ai.aicodemother.ai.model.MultiFileCodeResult;
 import dev.langchain4j.service.MemoryId;
 import dev.langchain4j.service.SystemMessage;
+import dev.langchain4j.service.TokenStream;
 import dev.langchain4j.service.UserMessage;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -56,5 +57,5 @@ public interface AiCodeGeneratorService {
      */
     // 注意这里必须要带上 @MemoryId 注解，因为框架会将这个参数传递给工具类，方便工具类获取对话记忆
     @SystemMessage(fromResource = "prompt/codegen-vue-project-system-prompt.txt")
-    Flux<String> generateVueProjectCodeStream(@MemoryId long appId, @UserMessage String userMessage);
+    TokenStream generateVueProjectCodeStream(@MemoryId long appId, @UserMessage String userMessage);
 }
