@@ -88,11 +88,12 @@ public class AiCodeGeneratorServiceFactory {
      * @return
      */
     private AiCodeGeneratorService createAiCodeGeneratorService(long appId, CodeGenTypeEnum codeGenType) {
-        log.info("为 appId: {} 创建新的 AI 服务实例", appId);
+        String cacheKey = buildCacheKey(appId, codeGenType);
+        log.info("为 缓存键: {} 创建新的 AI 服务实例", cacheKey);
         // 根据 appId 构建独立的对话记忆
         MessageWindowChatMemory chatMemory = MessageWindowChatMemory
                 .builder()
-                .id(appId)
+                .id(cacheKey)
                 .chatMemoryStore(redisChatMemoryStore)
                 .maxMessages(20)
                 .build();
