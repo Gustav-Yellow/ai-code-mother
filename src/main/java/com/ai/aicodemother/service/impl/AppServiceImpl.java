@@ -21,6 +21,7 @@ import com.ai.aicodemother.model.enums.CodeGenTypeEnum;
 import com.ai.aicodemother.model.vo.AppVO;
 import com.ai.aicodemother.model.vo.UserVO;
 import com.ai.aicodemother.service.ChatHistoryService;
+import com.ai.aicodemother.service.ScreenshotService;
 import com.ai.aicodemother.service.UserService;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
@@ -29,6 +30,7 @@ import com.ai.aicodemother.mapper.AppMapper;
 import com.ai.aicodemother.service.AppService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
@@ -64,6 +66,8 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
 
     @Resource
     private VueProjectBuilder vueProjectBuilder;
+    @Autowired
+    private ScreenshotService screenshotService;
 
     /**
      * 根据 AppId 和消息，生成代码
@@ -237,6 +241,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
         String deployDirPath = AppConstant.CODE_DEPLOY_ROOT_DIR + File.separator + deployKey;
         try {
             FileUtil.copyContent(sourceDir, new File(deployDirPath), true);
+            log.info("Vue 项目部署成功，部署目录: {}", deployDirPath);
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "部署失败：" + e.getMessage());
         }
@@ -250,7 +255,33 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
         ThrowUtils.throwIf(!updateResult, ErrorCode.OPERATION_ERROR, "更新应用部署信息失败");
 
         // 10. 返回可访问的 URL 地址
-        return String.format("%s/%s/", AppConstant.CODE_DEPLOY_HOST, deployKey);
+        String appDeployUrl = String.format("%s/%s/", AppConstant.CODE_DEPLOY_HOST, deployKey);
+
+        // 11. 异步生成截图并且更新应用封面
+        generateAppScreenshotAsync(appId, appDeployUrl);
+
+        return appDeployUrl;
+    }
+
+    /**
+     * 异步生成应用截图并更新应用封面
+     *
+     * @param appId 应用id
+     * @param appUrl 应用部署地址
+     */
+    @Override
+    public void generateAppScreenshotAsync(Long appId, String appUrl) {
+        // 使用虚拟线程执行
+        Thread.startVirtualThread(() -> {
+            // 调用截图服务生成截图并上传
+            String screenshotUrl = screenshotService.generateAndUploadScreenshot(appUrl);
+            // 更新数据库封面
+            App updateApp = new App();
+            updateApp.setId(appId);
+            updateApp.setCover(screenshotUrl);
+            boolean updated = this.updateById(updateApp);
+            ThrowUtils.throwIf(!updated, ErrorCode.OPERATION_ERROR, "更新应用封面字段失败");
+        });
     }
 
     /**
