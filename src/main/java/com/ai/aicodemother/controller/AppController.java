@@ -3,12 +3,15 @@ package com.ai.aicodemother.controller;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.ai.aicodemother.ai.AiCodeGenTypeRoutingService;
+import com.ai.aicodemother.ai.AiCodeGenTypeRoutingServiceFactory;
 import com.ai.aicodemother.annotation.AuthCheck;
 import com.ai.aicodemother.common.BaseResponse;
 import com.ai.aicodemother.common.DeleteRequest;
 import com.ai.aicodemother.common.ResultUtils;
 import com.ai.aicodemother.constant.AppConstant;
 import com.ai.aicodemother.constant.UserConstant;
+import com.ai.aicodemother.core.handler.StreamHandlerExecutor;
 import com.ai.aicodemother.exception.BusinessException;
 import com.ai.aicodemother.exception.ErrorCode;
 import com.ai.aicodemother.exception.ThrowUtils;
@@ -54,6 +57,9 @@ public class AppController {
 
     @Resource
     private ProjectDownloadService projectDownloadService;
+
+    @Resource
+    private AiCodeGenTypeRoutingService aiCodeGenTypeRoutingService;
 
     /**
      * 应用聊天生成代码（流式 SSE）
@@ -103,25 +109,10 @@ public class AppController {
     @PostMapping("/add")
     public BaseResponse<Long> addApp(@RequestBody AppAddRequest appAddRequest, HttpServletRequest request) {
         ThrowUtils.throwIf(appAddRequest == null, ErrorCode.PARAMS_ERROR);
-        // 参数校验
-        String initPrompt = appAddRequest.getInitPrompt();
-        ThrowUtils.throwIf(StrUtil.isBlank(initPrompt), ErrorCode.PARAMS_ERROR, "初始化 prompt 不能为空");
         // 获取当前登录用户
         User loginUser = userService.getLoginUser(request);
-        // 构造入库对象
-        App app = new App();
-        BeanUtil.copyProperties(appAddRequest, app);
-        app.setUserId(loginUser.getId());
-        // 应用名称暂时为 initPrompt 前 12 位
-        app.setAppName(initPrompt.substring(0, Math.min(initPrompt.length(), 12)));
-        // 默认设置为 Multi-File 生成
-        // app.setCodeGenType(CodeGenTypeEnum.MULTI_FILE.getValue());
-        // 默认设置为 VUE_PROJECT 生成
-        app.setCodeGenType(CodeGenTypeEnum.VUE_PROJECT.getValue());
-        // 插入数据库
-        boolean result = appService.save(app);
-        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
-        return ResultUtils.success(app.getId());
+        Long appId = appService.createApp(appAddRequest, loginUser);
+        return ResultUtils.success(appId);
     }
 
     /**

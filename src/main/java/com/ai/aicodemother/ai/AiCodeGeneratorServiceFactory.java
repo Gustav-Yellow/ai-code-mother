@@ -95,7 +95,7 @@ public class AiCodeGeneratorServiceFactory {
                 .builder()
                 .id(cacheKey)
                 .chatMemoryStore(redisChatMemoryStore)
-                .maxMessages(20)
+                .maxMessages(50)  // 调大 AI 的对话窗口，避免 AI 因为上下文窗口过小导致早期的历史对话被挤掉
                 .build();
         // 从数据库中加载对话历史到记忆中
         chatHistoryService.loadChatHistoryToMemory(appId, chatMemory, 20);
