@@ -136,10 +136,18 @@ public class OpenAiStreamingChatModel implements StreamingChatModel {
                         }
                     }
                     ChatResponse chatResponse = openAiResponseBuilder.build();
-                    try {
-                        handler.onCompleteResponse(chatResponse);
-                    } catch (Exception e) {
-                        withLoggingExceptions(() -> handler.onError(e));
+                    if (chatResponse != null) {
+                        try {
+                            handler.onCompleteResponse(chatResponse);
+                        } catch (Exception e) {
+                            withLoggingExceptions(() -> handler.onError(e));
+                        }
+                    } else {
+                        withLoggingExceptions(() -> handler.onError(
+                                new RuntimeException("DeepSeek returned an empty SSE stream (no data received). " +
+                                        "Check: 1) API key validity and quota, 2) model name 'deepseek-v4-pro' availability, " +
+                                        "3) DeepSeek service status.")
+                        ));
                     }
                 })
                 .onError(throwable -> {
