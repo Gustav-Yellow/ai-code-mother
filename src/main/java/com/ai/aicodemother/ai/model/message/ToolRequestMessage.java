@@ -22,6 +22,9 @@ public class ToolRequestMessage extends StreamMessage {
     // 工具参数
     private String arguments;
 
+    // 工具调用请求文本
+    private String text;
+
     /**
      * 构造方法
      *

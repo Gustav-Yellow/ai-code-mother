@@ -1,8 +1,9 @@
 package com.ai.aicodemother.ai;
 
+import com.ai.aicodemother.ai.tools.*;
+import com.ai.aicodemother.service.ChatHistoryOriginalService;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.ai.aicodemother.ai.tools.FileWriteTool;
 import com.ai.aicodemother.exception.BusinessException;
 import com.ai.aicodemother.exception.ErrorCode;
 import com.ai.aicodemother.model.enums.CodeGenTypeEnum;
@@ -41,6 +42,12 @@ public class AiCodeGeneratorServiceFactory {
 
     @Resource
     private ChatHistoryService chatHistoryService;
+
+    @Resource
+    private ChatHistoryOriginalService chatHistoryOriginalService;
+
+    @Resource
+    private ToolManager toolManager;
 
     /**
      * AI 服务实例缓存
@@ -88,6 +95,7 @@ public class AiCodeGeneratorServiceFactory {
      * @return
      */
     private AiCodeGeneratorService createAiCodeGeneratorService(long appId, CodeGenTypeEnum codeGenType) {
+        AiCodeGeneratorService aiCodeGeneratorService;
         String cacheKey = buildCacheKey(appId, codeGenType);
         log.info("为 缓存键: {} 创建新的 AI 服务实例", cacheKey);
         // 根据 appId 构建独立的对话记忆
@@ -97,30 +105,37 @@ public class AiCodeGeneratorServiceFactory {
                 .chatMemoryStore(redisChatMemoryStore)
                 .maxMessages(50)  // 调大 AI 的对话窗口，避免 AI 因为上下文窗口过小导致早期的历史对话被挤掉
                 .build();
-        // 从数据库中加载对话历史到记忆中
-        chatHistoryService.loadChatHistoryToMemory(appId, chatMemory, 20);
-        return switch (codeGenType) {
+        switch (codeGenType) {
             // Vue 项目生成，使用工具调用和推理模型
-            case VUE_PROJECT -> AiServices.builder(AiCodeGeneratorService.class)
-                    .chatModel(chatModel)
-                    .streamingChatModel(reasoningStreamingChatModel)
-                    .chatMemoryProvider(memoryId -> chatMemory)
-                    .tools(new FileWriteTool())
-                    // 处理工具调用幻觉问题
-                    .hallucinatedToolNameStrategy(toolExecutionRequest ->
-                            ToolExecutionResultMessage.from(toolExecutionRequest,
-                                    "Error: there is no tool called " + toolExecutionRequest.name())
-                    )
-                    .build();
+            case VUE_PROJECT -> {
+                // 从数据库加载历史对话到缓存中，由于多了工具调用相关信息，加载的最大数量稍微多一些
+                // 如果是 VUE 项目，那么就从 chatHistoryOriginal 中获取数据，这样就能包含 tool_request 的信息。
+                chatHistoryOriginalService.loadOriginalChatHistoryToMemory(appId, chatMemory, 50);
+                // Vue 项目生成使用推理模型
+                aiCodeGeneratorService = AiServices.builder(AiCodeGeneratorService.class)
+                        .streamingChatModel(reasoningStreamingChatModel)
+                        .chatMemoryProvider(memoryId -> chatMemory)
+                        .tools(toolManager.getAllTools())
+                        .hallucinatedToolNameStrategy(toolExecutionRequest -> ToolExecutionResultMessage.from(
+                                toolExecutionRequest, "Error: there is no tool called " + toolExecutionRequest.name()
+                        ))
+                        .build();
+            }
             // HTML 和 多文件生成，使用流式对话模型
-            case HTML, MULTI_FILE -> AiServices.builder(AiCodeGeneratorService.class)
-                    .chatModel(chatModel)
-                    .streamingChatModel(openAiStreamingChatModel)
-                    .chatMemory(chatMemory)
-                    .build();
+            case HTML, MULTI_FILE -> {
+                // 从数据库加载历史对话到缓存中
+                chatHistoryService.loadChatHistoryToMemory(appId, chatMemory, 20);
+                // HTML 和多文件生成模式使用默认模型
+                aiCodeGeneratorService = AiServices.builder(AiCodeGeneratorService.class)
+                        .chatModel(chatModel)
+                        .streamingChatModel(openAiStreamingChatModel)
+                        .chatMemory(chatMemory)
+                        .build();
+            }
             default ->
                     throw new BusinessException(ErrorCode.SYSTEM_ERROR, "不支持的代码生成类型: " + codeGenType.getValue());
-        };
+        }
+        return aiCodeGeneratorService;
     }
 
     /**

@@ -22,14 +22,11 @@ import com.ai.aicodemother.model.enums.ChatHistoryMessageTypeEnum;
 import com.ai.aicodemother.model.enums.CodeGenTypeEnum;
 import com.ai.aicodemother.model.vo.AppVO;
 import com.ai.aicodemother.model.vo.UserVO;
-import com.ai.aicodemother.service.ChatHistoryService;
-import com.ai.aicodemother.service.ScreenshotService;
-import com.ai.aicodemother.service.UserService;
+import com.ai.aicodemother.service.*;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import com.ai.aicodemother.model.entity.App;
 import com.ai.aicodemother.mapper.AppMapper;
-import com.ai.aicodemother.service.AppService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,6 +59,9 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
 
     @Resource
     private ChatHistoryService chatHistoryService;
+
+    @Resource
+    private ChatHistoryOriginalService chatHistoryOriginalService;
 
     @Resource
     private StreamHandlerExecutor streamHandlerExecutor;
@@ -103,12 +103,13 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
         }
         // 5. 通过校验之后，添加用户消息到历史对话
         chatHistoryService.addChatMessage(appId, message, ChatHistoryMessageTypeEnum.USER.getValue(), loginUser.getId());
+        chatHistoryOriginalService.addOriginalChatMessage(appId, message, ChatHistoryMessageTypeEnum.USER.getValue(), loginUser.getId());
 
         // 6. 调用 AI 生成代码（流式）
         Flux<String> codeStream = aiCodeGeneratorFacade.generateAndSaveCodeStream(message, codeGenTypeEnum, appId);
 
         // 7. 收集 AI 响应内容并在完成之后记录到对话历史
-        return streamHandlerExecutor.doExecute(codeStream, chatHistoryService, appId, loginUser, codeGenTypeEnum);
+        return streamHandlerExecutor.doExecute(codeStream, chatHistoryService, chatHistoryOriginalService, appId, loginUser, codeGenTypeEnum);
     }
 
     /**
@@ -339,6 +340,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
         // 先删除关联的对话历史，如果删除失败，不影响删除应用
         try {
             chatHistoryService.deleteByAppId(appId);
+            chatHistoryOriginalService.deleteByAppId(appId);
         } catch (Exception e) {
             log.error("删除应用关联的对话历史失败: {}", e.getMessage());
         }

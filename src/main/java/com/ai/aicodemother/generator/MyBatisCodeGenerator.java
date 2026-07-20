@@ -17,7 +17,8 @@ public class MyBatisCodeGenerator {
     // 生成其他的表是手动修改表名
     // private static final String[] TABLE_NAMES = {"user"};
     // private static final String[] TABLE_NAMES = {"app"};
-    private static final String[] TABLE_NAMES = {"chat_history"};
+    // private static final String[] TABLE_NAMES = {"chat_history"};
+    private static final String[] TABLE_NAMES = {"chat_history_original"};
 
     public static void main(String[] args) {
         // 获取数据源信息

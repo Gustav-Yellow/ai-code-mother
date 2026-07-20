@@ -35,8 +35,6 @@ public class AiCodeGeneratorFacade {
     // 需要根据不同的应用id，获取不同的 AiCodeGeneratorService 实例，不再直接引用 AiCodeGeneratorService 实例
     @Resource
     private AiCodeGeneratorServiceFactory aiCodeGeneratorServiceFactory;
-    @Autowired
-    private View error;
 
     /**
      * 统一入口：根据类型生成并保存代码
