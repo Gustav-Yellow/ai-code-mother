@@ -31,7 +31,7 @@ public class VueProjectBuilder {
     }
 
     /**
-     * 构建 Vue 项目
+     * 构建 Vue 项目（同步构建）
      *
      * @param projectPath 项目根目录路径
      * @return 是否构建成功

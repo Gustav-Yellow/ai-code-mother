@@ -8,6 +8,8 @@ import com.ai.aicodemother.ai.model.MultiFileCodeResult;
 import com.ai.aicodemother.ai.model.message.AiResponseMessage;
 import com.ai.aicodemother.ai.model.message.ToolExecutedMessage;
 import com.ai.aicodemother.ai.model.message.ToolRequestMessage;
+import com.ai.aicodemother.constant.AppConstant;
+import com.ai.aicodemother.core.builder.VueProjectBuilder;
 import com.ai.aicodemother.core.parser.CodeParserExecutor;
 import com.ai.aicodemother.core.saver.CodeFileSaverExecutor;
 import com.ai.aicodemother.exception.BusinessException;
@@ -35,6 +37,9 @@ public class AiCodeGeneratorFacade {
     // 需要根据不同的应用id，获取不同的 AiCodeGeneratorService 实例，不再直接引用 AiCodeGeneratorService 实例
     @Resource
     private AiCodeGeneratorServiceFactory aiCodeGeneratorServiceFactory;
+
+    @Resource
+    private VueProjectBuilder vueProjectBuilder;
 
     /**
      * 统一入口：根据类型生成并保存代码
@@ -126,6 +131,9 @@ public class AiCodeGeneratorFacade {
                         sink.next(JSONUtil.toJsonStr(toolExecutionMessage));
                     })
                     .onCompleteResponse((ChatResponse response) -> {
+                        // 在 ai 响应结束之后，创建 vue 项目目录，并同步构建 vue 项目。（确保预览的时候项目已经就绪）
+                        String projectPath = AppConstant.CODE_OUTPUT_ROOT_DIR + "/vue_project_" + appId;
+                        vueProjectBuilder.buildProject(projectPath);
                         // 这里是最终响应
                         sink.complete();
                     })
