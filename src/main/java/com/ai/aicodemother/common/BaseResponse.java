@@ -2,10 +2,12 @@ package com.ai.aicodemother.common;
 
 import com.ai.aicodemother.exception.ErrorCode;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
 @Data
+@NoArgsConstructor
 public class BaseResponse<T> implements Serializable {
 
     private int code;
