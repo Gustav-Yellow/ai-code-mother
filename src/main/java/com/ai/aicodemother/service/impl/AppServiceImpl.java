@@ -3,11 +3,10 @@ package com.ai.aicodemother.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.poi.excel.ExcelWriter;
 import com.ai.aicodemother.ai.AiCodeGenTypeRoutingService;
+import com.ai.aicodemother.ai.AiCodeGenTypeRoutingServiceFactory;
 import com.ai.aicodemother.constant.AppConstant;
 import com.ai.aicodemother.core.AiCodeGeneratorFacade;
 import com.ai.aicodemother.core.builder.VueProjectBuilder;
@@ -29,7 +28,6 @@ import com.ai.aicodemother.model.entity.App;
 import com.ai.aicodemother.mapper.AppMapper;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 
@@ -73,7 +71,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
     private ScreenshotService screenshotService;
 
     @Resource
-    private AiCodeGenTypeRoutingService aiCodeGenTypeRoutingService;
+    private AiCodeGenTypeRoutingServiceFactory aiCodeGenTypeRoutingServiceFactory;
 
 
     /**
@@ -130,7 +128,9 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App>  implements AppS
         app.setUserId(loginUser.getId());
         // 应用名称暂时为 initPrompt 前 12 位
         app.setAppName(initPrompt.substring(0, Math.min(initPrompt.length(), 12)));
-        // 使用 AI 智能选择代码生成类型
+        // 使用 AI 智能选择代码生成类型（多例模式）
+        // 每次请求，都调用 AICodeGenTypeRoutingServiceFactory 的 createAiCodeGenTypeRoutingService 方法创建一个 AiCodeGenTypeRoutingService 实例
+        AiCodeGenTypeRoutingService aiCodeGenTypeRoutingService = aiCodeGenTypeRoutingServiceFactory.createAiCodeGenTypeRoutingService();
         CodeGenTypeEnum selectedCodeGenType = aiCodeGenTypeRoutingService.routeCodeGenType(initPrompt);
         app.setCodeGenType(selectedCodeGenType.getValue());
         // 插入数据库

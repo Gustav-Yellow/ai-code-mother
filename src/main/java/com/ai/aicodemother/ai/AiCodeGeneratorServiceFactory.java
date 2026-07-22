@@ -2,6 +2,7 @@ package com.ai.aicodemother.ai;
 
 import com.ai.aicodemother.ai.tools.*;
 import com.ai.aicodemother.service.ChatHistoryOriginalService;
+import com.ai.aicodemother.utils.SpringContextUtil;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.ai.aicodemother.exception.BusinessException;
@@ -28,14 +29,8 @@ import java.time.Duration;
 @Slf4j
 public class AiCodeGeneratorServiceFactory {
 
-    @Resource
+    @Resource(name = "openAiChatModel")
     private ChatModel chatModel;
-
-    @Resource
-    private StreamingChatModel openAiStreamingChatModel;
-
-    @Resource
-    private StreamingChatModel reasoningStreamingChatModel;
 
     @Resource
     private RedisChatMemoryStore redisChatMemoryStore;
@@ -108,6 +103,8 @@ public class AiCodeGeneratorServiceFactory {
         switch (codeGenType) {
             // Vue 项目生成，使用工具调用和推理模型
             case VUE_PROJECT -> {
+                // 使用多例模式的 ReasoningStreamingChatModel 解决并发问题
+                StreamingChatModel reasoningStreamingChatModel = SpringContextUtil.getBean("reasoningStreamingChatModelPrototype", StreamingChatModel.class);
                 // 从数据库加载历史对话到缓存中，由于多了工具调用相关信息，加载的最大数量稍微多一些
                 // 如果是 VUE 项目，那么就从 chatHistoryOriginal 中获取数据，这样就能包含 tool_request 的信息。
                 chatHistoryOriginalService.loadOriginalChatHistoryToMemory(appId, chatMemory, 50);
@@ -123,6 +120,8 @@ public class AiCodeGeneratorServiceFactory {
             }
             // HTML 和 多文件生成，使用流式对话模型
             case HTML, MULTI_FILE -> {
+                // 使用多例模式的 StreamingChatModel 解决并发问题
+                StreamingChatModel openAiStreamingChatModel = SpringContextUtil.getBean("streamingChatModelPrototype", StreamingChatModel.class);
                 // 从数据库加载历史对话到缓存中
                 chatHistoryService.loadChatHistoryToMemory(appId, chatMemory, 20);
                 // HTML 和多文件生成模式使用默认模型
