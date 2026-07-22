@@ -118,6 +118,7 @@ public class AiCodeGeneratorServiceFactory {
                         .hallucinatedToolNameStrategy(toolExecutionRequest -> ToolExecutionResultMessage.from(
                                 toolExecutionRequest, "Error: there is no tool called " + toolExecutionRequest.name()
                         ))
+                        .maxSequentialToolsInvocations(20) // 最大调用 20 次工具，防止无限循环
                         .inputGuardrails(new PromptSafetyInputGuardrail()) // 全局添加输入护轨
                         // .outputGuardrails(new RetryOutputGuardrail()) // 添加全局输出护轨，但是输出护轨不支持 TokenStream.onPartialResponse 的流式输出，因此通常不使用
                         .build();
