@@ -1,5 +1,7 @@
 package com.ai.aicodemother.ai;
 
+import com.ai.aicodemother.ai.guardrail.PromptSafetyInputGuardrail;
+import com.ai.aicodemother.ai.guardrail.RetryOutputGuardrail;
 import com.ai.aicodemother.ai.tools.*;
 import com.ai.aicodemother.service.ChatHistoryOriginalService;
 import com.ai.aicodemother.utils.SpringContextUtil;
@@ -116,6 +118,8 @@ public class AiCodeGeneratorServiceFactory {
                         .hallucinatedToolNameStrategy(toolExecutionRequest -> ToolExecutionResultMessage.from(
                                 toolExecutionRequest, "Error: there is no tool called " + toolExecutionRequest.name()
                         ))
+                        .inputGuardrails(new PromptSafetyInputGuardrail()) // 全局添加输入护轨
+                        // .outputGuardrails(new RetryOutputGuardrail()) // 添加全局输出护轨，但是输出护轨不支持 TokenStream.onPartialResponse 的流式输出，因此通常不使用
                         .build();
             }
             // HTML 和 多文件生成，使用流式对话模型
@@ -129,6 +133,8 @@ public class AiCodeGeneratorServiceFactory {
                         .chatModel(chatModel)
                         .streamingChatModel(openAiStreamingChatModel)
                         .chatMemory(chatMemory)
+                        .inputGuardrails(new PromptSafetyInputGuardrail()) // 全局添加输入护轨
+                        // .outputGuardrails(new RetryOutputGuardrail()) // 添加全局输出护轨，但是输出护轨不支持 TokenStream.onPartialResponse 的流式输出，因此通常不使用
                         .build();
             }
             default ->
